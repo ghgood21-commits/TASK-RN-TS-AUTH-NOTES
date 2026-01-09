@@ -9,6 +9,7 @@ import {
 import React, { useState } from "react";
 import colors from "../../../data/styling/colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useMutation } from "@tanstack/react-query";
 
 const AddNote = () => {
   const [title, setTitle] = useState("");
@@ -23,6 +24,24 @@ const AddNote = () => {
     const newTopics = [...topics];
     newTopics[index] = text;
     setTopics(newTopics);
+  };
+
+  const { mutate } = useMutation({
+    mutationKey: ["createNote"],
+    mutationFn: () =>
+      createNote({ title: title, topic: topics, body: noteBody }),
+    onSuccess: () => {
+      alert("You added a note!");
+    },
+    onError: (err) => {
+      alert("Error has occured");
+      console.log(err);
+    },
+  });
+
+  const handleCreate = () => {
+    console.log({ title, topics, noteBody });
+    mutate();
   };
 
   return (

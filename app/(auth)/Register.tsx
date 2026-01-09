@@ -6,13 +6,70 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
+  Image,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import colors from "../../data/styling/colors";
+import { useMutation } from "@tanstack/react-query";
+import { Register } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
+import { setToken } from "@/api/storage";
+import { useRouter } from "expo-router";
+import AuthContext from "@/context/AuthContext";
+import { register } from "@/api/auth";
 
-const Register = () => {
+const egister = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [image, setImage] = useState<string>("");
+  const router = useRouter();
+  const { setIsAuthenticated } = useContext(AuthContext);
+
+  const { mutate } = useMutation({
+    mutationKey: ["register"],
+    mutationFn: () => register({ email, password, name, image }),
+    onError: (err) => {
+      console.log(err);
+    },
+    onSuccess: async (data) => {
+      await setToken(data.token);
+      router.push("/(tabs)/(home)/home");
+      setIsAuthenticated(true);
+    },
+  });
+
+  const pickImage = async () => {
+    // No permissions request is necessary for launching the image library.
+    // Manually request permissions for videos on iOS when `allowsEditing` is set to `false`
+    // and `videoExportPreset` is `'Passthrough'` (the default), ideally before launching the picker
+    // so the app users aren't surprised by a system dialog after picking a video.
+    // See "Invoke permissions for videos" sub section for more details.
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert(
+        "Permission required",
+        "Permission to access the media library is required."
+      );
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
 
   const handleRegister = async () => {
     console.log(email, password);
@@ -76,7 +133,20 @@ const Register = () => {
             placeholderTextColor={colors.black}
           />
 
-          <TouchableOpacity style={{ marginTop: 20 }}>
+          {image && (
+            <Image
+              source={{ uri: image }}
+              style={{
+                width: 200,
+                height: 200,
+              }}
+            />
+          )}
+
+          <TouchableOpacity
+            style={{ marginTop: 20 }}
+            onPress={() => pickImage()}
+          >
             <Text style={{ color: colors.white, fontSize: 16 }}>
               Upload Profile Image
             </Text>

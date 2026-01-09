@@ -5,19 +5,20 @@ import {
   Text,
   View,
 } from "react-native";
-import React from "react";
+import React, { useContext } from "react";
 import colors from "../../../data/styling/colors";
 import Note from "../../../components/Note";
 import { useQuery } from "@tanstack/react-query";
 import { getAllNotes } from "../../../api/notes";
 import { NoteType } from "../../../types/NoteType";
+import AuthContext from "@/context/AuthContext";
 
 const Home = () => {
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes"],
     queryFn: getAllNotes,
   });
-
+  const { isAuthenticated } = useContext(AuthContext);
   if (isLoading) {
     return (
       <View
@@ -53,6 +54,23 @@ const Home = () => {
         backgroundColor: colors.primary,
       }}
     >
+      {isAuthenticated ? (
+        <Text
+          style={{
+            color: "white",
+          }}
+        >
+          "user is logged in"
+        </Text>
+      ) : (
+        <Text
+          style={{
+            color: "red",
+          }}
+        >
+          "User is not logged in"
+        </Text>
+      )}
       <ScrollView
         style={{
           flex: 1,
